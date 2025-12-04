@@ -16,6 +16,7 @@ from exceptions import (
     database_exception_handler,
     general_exception_handler
 )
+from registration.routes import router as registration_router
 
 # Configure logging
 logging.basicConfig(
@@ -48,6 +49,9 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(EventNotFoundException, event_not_found_handler)
 app.add_exception_handler(DatabaseException, database_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
+
+# Include registration router
+app.include_router(registration_router)
 
 
 @app.get("/")
