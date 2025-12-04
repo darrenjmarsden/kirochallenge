@@ -51,17 +51,35 @@ class User(UserBase):
 class RegistrationEventCreate(BaseModel):
     """Model for creating an event with registration capabilities"""
     eventId: Optional[str] = Field(None, description="Optional custom event ID")
-    name: str = Field(..., min_length=1, max_length=200, description="Event name")
+    name: Optional[str] = Field(None, min_length=1, max_length=200, description="Event name")
+    title: Optional[str] = Field(None, min_length=1, max_length=200, description="Event title (alias for name)")
     capacity: int = Field(..., gt=0, le=100000, description="Maximum number of attendees")
-    hasWaitlist: bool = Field(default=False, description="Whether event has waitlist enabled")
+    hasWaitlist: Optional[bool] = Field(None, description="Whether event has waitlist enabled")
+    waitlistEnabled: Optional[bool] = Field(None, description="Whether event has waitlist enabled (alias)")
+    # Optional fields that may be in request but not used
+    date: Optional[str] = None
+    organizer: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    status: Optional[str] = None
     
-    @field_validator('name')
+    @field_validator('name', 'title')
     @classmethod
-    def validate_name(cls, v: str) -> str:
-        """Ensure name is not just whitespace"""
-        if not v or not v.strip():
-            raise ValueError('Name cannot be empty or contain only whitespace')
-        return v.strip()
+    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+        """Ensure name is not just whitespace if provided"""
+        if v and not v.strip():
+            raise ValueError('Name/title cannot be empty or contain only whitespace')
+        return v.strip() if v else v
+    
+    def get_name(self) -> str:
+        """Get the event name, preferring title over name"""
+        return (self.title or self.name or "").strip()
+    
+    def get_waitlist_enabled(self) -> bool:
+        """Get waitlist setting, checking both field names"""
+        if self.waitlistEnabled is not None:
+            return self.waitlistEnabled
+        return self.hasWaitlist or False
 
 
 class RegistrationEvent(BaseModel):

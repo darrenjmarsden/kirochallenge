@@ -1,5 +1,5 @@
 """API routes for registration system"""
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Body
 from typing import List
 import logging
 
@@ -23,7 +23,7 @@ from .exceptions import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/registration", tags=["registration"])
+router = APIRouter(tags=["registration"])
 
 
 # Exception handler helper
@@ -78,6 +78,21 @@ async def get_user(user_id: str):
         handle_exception(e)
 
 
+@router.get("/users/{user_id}/registrations", response_model=List[RegistrationEvent])
+async def get_user_registrations(user_id: str):
+    """
+    Get all events a user is registered for (active registrations only)
+    
+    - **user_id**: User identifier
+    """
+    try:
+        logger.info(f"Getting registrations for user: {user_id}")
+        events = registration_service.get_user_registrations(user_id)
+        return events
+    except Exception as e:
+        handle_exception(e)
+
+
 # Event endpoints
 @router.post("/events", response_model=RegistrationEvent, status_code=status.HTTP_201_CREATED)
 async def create_event(event: RegistrationEventCreate):
@@ -85,17 +100,21 @@ async def create_event(event: RegistrationEventCreate):
     Create a new event with registration capabilities
     
     - **eventId**: Optional custom event ID (auto-generated if not provided)
-    - **name**: Event name
+    - **name** or **title**: Event name
     - **capacity**: Maximum number of attendees
-    - **hasWaitlist**: Whether event has waitlist enabled
+    - **hasWaitlist** or **waitlistEnabled**: Whether event has waitlist enabled
     """
     try:
-        logger.info(f"Creating registration event: {event.name}")
+        event_name = event.get_name()
+        if not event_name:
+            raise ValidationError("Event name or title is required")
+        
+        logger.info(f"Creating registration event: {event_name}")
         created_event = event_service.create_event(
             event.eventId,
-            event.name,
+            event_name,
             event.capacity,
-            event.hasWaitlist
+            event.get_waitlist_enabled()
         )
         return created_event
     except Exception as e:
@@ -139,51 +158,68 @@ async def get_event_capacity(event_id: str):
         handle_exception(e)
 
 
+@router.get("/events/{event_id}/registrations")
+async def get_event_registrations(event_id: str):
+    """
+    Get all registrations for an event
+    
+    - **event_id**: Event identifier
+    """
+    try:
+        logger.info(f"Getting registrations for event: {event_id}")
+        # Verify event exists
+        event = event_service.get_event(event_id)
+        if not event:
+            raise NotFoundError(f"Event {event_id} not found")
+        
+        # Get all registrations for this event
+        from .repositories import registration_repository, waitlist_repository
+        registrations = registration_repository.find_by_event(event_id)
+        waitlist = waitlist_repository.find_by_event(event_id)
+        
+        return {
+            "eventId": event_id,
+            "registrations": registrations,
+            "waitlist": waitlist
+        }
+    except Exception as e:
+        handle_exception(e)
+
+
 # Registration endpoints
-@router.post("/registrations", response_model=RegistrationResult, status_code=status.HTTP_201_CREATED)
-async def register_user(registration: RegistrationCreate):
+@router.post("/events/{event_id}/registrations", response_model=RegistrationResult, status_code=status.HTTP_201_CREATED)
+async def register_user_for_event(event_id: str, body: dict = Body(...)):
     """
     Register a user for an event
     
-    - **userId**: User identifier
-    - **eventId**: Event identifier
+    - **event_id**: Event identifier (in path)
+    - **userId**: User identifier (in body)
     
     Returns either an active registration or a waitlist entry if the event is full
     """
     try:
-        logger.info(f"Registering user {registration.userId} for event {registration.eventId}")
-        result = registration_service.register_user(registration.userId, registration.eventId)
+        user_id = body.get("userId")
+        if not user_id:
+            raise ValidationError("userId is required in request body")
+        
+        logger.info(f"Registering user {user_id} for event {event_id}")
+        result = registration_service.register_user(user_id, event_id)
         return result
     except Exception as e:
         handle_exception(e)
 
 
-@router.delete("/registrations", response_model=UnregistrationResult)
-async def unregister_user(userId: str, eventId: str):
+@router.delete("/events/{event_id}/registrations/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def unregister_user_from_event(event_id: str, user_id: str):
     """
     Unregister a user from an event
     
-    - **userId**: User identifier
-    - **eventId**: Event identifier
-    """
-    try:
-        logger.info(f"Unregistering user {userId} from event {eventId}")
-        result = registration_service.unregister_user(userId, eventId)
-        return result
-    except Exception as e:
-        handle_exception(e)
-
-
-@router.get("/users/{user_id}/events", response_model=List[RegistrationEvent])
-async def get_user_events(user_id: str):
-    """
-    Get all events a user is registered for (active registrations only)
-    
+    - **event_id**: Event identifier
     - **user_id**: User identifier
     """
     try:
-        logger.info(f"Getting events for user: {user_id}")
-        events = registration_service.get_user_registrations(user_id)
-        return events
+        logger.info(f"Unregistering user {user_id} from event {event_id}")
+        result = registration_service.unregister_user(user_id, event_id)
+        return None  # 204 No Content
     except Exception as e:
         handle_exception(e)
