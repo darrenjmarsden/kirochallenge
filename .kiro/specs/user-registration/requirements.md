@@ -6,7 +6,7 @@
 
 This document specifies the requirements for a user registration system that enables users to register for events with capacity constraints and waitlist management. The system manages user profiles, event configurations, and registration workflows including handling full events and waitlist operations.
 
-**Requirement Dependencies:** Requirement 3 (User Registration) depends on Requirements 1 and 2. Requirement 5 (Waitlist) depends on Requirements 2 and 4. Requirement 6 (Unregistration) depends on Requirement 3 and optionally Requirement 5. Requirement 7 (List Registrations) depends on Requirement 3.
+
 
 ## Glossary
 
