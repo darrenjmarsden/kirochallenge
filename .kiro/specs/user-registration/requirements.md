@@ -1,7 +1,6 @@
 # Requirements Document
 
-**Version:** 1.0  
-**Last Updated:** December 4, 2024
+
 
 ## Introduction
 
