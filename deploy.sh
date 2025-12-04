@@ -18,7 +18,7 @@ echo "✓ Using AWS credentials from environment variables"
 # Install infrastructure dependencies
 echo "📦 Installing CDK dependencies..."
 cd infrastructure
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 # Bootstrap CDK (only needed once per account/region)
 echo "🔧 Bootstrapping CDK (if needed)..."
