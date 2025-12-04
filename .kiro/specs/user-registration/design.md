@@ -1,5 +1,8 @@
 # Design Document
 
+**Version:** 1.0  
+**Last Updated:** December 4, 2024
+
 ## Overview
 
 The user registration system is a domain-driven application that manages users, events, and registrations with capacity constraints and waitlist functionality. The system provides a clean separation between domain logic, data persistence, and API interfaces. The core design emphasizes immutability where possible, explicit error handling, and transactional consistency for registration operations.

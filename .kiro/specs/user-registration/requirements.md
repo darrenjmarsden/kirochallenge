@@ -1,8 +1,18 @@
 # Requirements Document
 
+**Version:** 1.0  
+**Last Updated:** December 4, 2024
+
 ## Introduction
 
 This document specifies the requirements for a user registration system that enables users to register for events with capacity constraints and waitlist management. The system manages user profiles, event configurations, and registration workflows including handling full events and waitlist operations.
+
+## Dependencies
+
+- **Requirement 3** (User Registration) depends on **Requirement 1** (User Creation) and **Requirement 2** (Event Creation)
+- **Requirement 5** (Waitlist) depends on **Requirement 2** (Event Creation with waitlist enabled) and **Requirement 4** (Full Event Detection)
+- **Requirement 6** (Unregistration) depends on **Requirement 3** (Registration) and optionally **Requirement 5** (Waitlist for promotion)
+- **Requirement 7** (List Registrations) depends on **Requirement 3** (Registration)
 
 ## Glossary
 
@@ -14,6 +24,8 @@ This document specifies the requirements for a user registration system that ena
 - **Registration**: The association between a user and an event indicating the user's participation
 - **Active Registration**: A confirmed registration where the user has secured a spot in the event
 - **Waitlist Position**: A user's place in the waitlist queue for a full event
+- **Unregister**: The action of removing a user's active registration from an event, freeing up capacity
+- **Promotion**: The automatic process of moving the first user from a waitlist to an active registration when capacity becomes available
 
 ## Requirements
 
